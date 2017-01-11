@@ -43,6 +43,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.MapMaker;
+import com.google.common.util.concurrent.Service;
+
 import com.google.inject.Binding;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -275,9 +277,11 @@ public class LifecycleManager implements Closeable, PostInjectorAction
         lifecycleState.set(obj, LifecycleState.POST_CONSTRUCTING);
         methods.methodInvoke(PostConstruct.class, obj);
         
+        lifecycleState.set(obj, LifecycleState.PRE_WARMING_UP);
         Method[] warmUpMethods = methods.annotatedMethods(WarmUp.class);
         if (warmUpMethods.length > 0) {
             Method[] postConstructMethods = methods.annotatedMethods(PostConstruct.class);
+
             for ( Method warmupMethod : warmUpMethods)
             {
                 boolean skipWarmup = false;
@@ -293,6 +297,14 @@ public class LifecycleManager implements Closeable, PostInjectorAction
                     LifecycleMethods.methodInvoke(warmupMethod, obj);
                 }
             }
+
+        }
+        lifecycleState.set(obj, LifecycleState.WARMING_UP);
+
+        if (methods.isGuavaService()) {
+            Service  svc = (Service) obj;
+
+            if (svc.state() == Service.State.NEW)  svc.startAsync();
         }
 
         List<LifecycleAction> preDestroyActions;
@@ -314,6 +326,7 @@ public class LifecycleManager implements Closeable, PostInjectorAction
             }
         }
 
+        lifecycleState.set(obj, LifecycleState.ACTIVE);
     }
 
     class LifecycleStateWrapper {

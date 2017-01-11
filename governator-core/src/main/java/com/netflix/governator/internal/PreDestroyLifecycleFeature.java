@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.Service;
 import com.netflix.governator.LifecycleAction;
 import com.netflix.governator.LifecycleFeature;
 import com.netflix.governator.internal.JSR250LifecycleAction.ValidationMode;
@@ -58,6 +59,14 @@ public final class PreDestroyLifecycleFeature implements LifecycleFeature {
                         clazz.asSubclass(AutoCloseable.class));
                 LOG.debug("adding action {}", closeableAction);
                 typeActions.add(closeableAction);
+                continueVisit = false;
+            }
+
+            if (continueVisit && Service.class.isAssignableFrom(clazz)) {
+                GuavaServiceStopLifecycleAction stopAction = new GuavaServiceStopLifecycleAction(
+                        clazz.asSubclass(Service.class));
+                LOG.debug("adding action {}", stopAction);
+                typeActions.add(stopAction);
                 continueVisit = false;
             }
             return continueVisit;
@@ -110,6 +119,29 @@ public final class PreDestroyLifecycleFeature implements LifecycleFeature {
         public void call(Object obj) throws Exception {
             LOG.info("calling action {}", description);
             AutoCloseable.class.cast(obj).close();
+        }
+
+        @Override
+        public String toString() {
+            return description;
+        }
+    }
+
+
+    private static final class GuavaServiceStopLifecycleAction implements LifecycleAction {
+        private final String description;
+
+        private GuavaServiceStopLifecycleAction(Class<? extends Service> clazz) {
+            this.description = new StringBuilder().append("GuavaService@").append(System.identityHashCode(this)).append("[").append(clazz.getName()).append(".")
+                    .append("stopAsync()").append("]").toString();
+        }
+
+        @Override
+        public void call(Object obj) throws Exception {
+            LOG.info("calling action {}", description);
+            Service  svc = (Service) obj;
+
+            if ((svc.state() == Service.State.RUNNING) || (svc.state() == Service.State.STARTING))  svc.stopAsync();
         }
 
         @Override

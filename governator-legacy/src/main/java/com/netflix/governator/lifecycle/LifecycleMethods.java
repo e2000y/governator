@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.Service;
 import com.netflix.governator.annotations.Configuration;
 import com.netflix.governator.annotations.ConfigurationVariable;
 import com.netflix.governator.annotations.PreConfiguration;
@@ -66,6 +67,7 @@ public class LifecycleMethods {
     private static final Logger log = LoggerFactory.getLogger(LifecycleMethods.class);
 
     private boolean hasValidations = false;
+    private boolean isGuavaService = false;
     private final boolean hasResources;
     final static Map<Method, MethodHandle> methodHandlesMap = new ConcurrentHashMap<>(I15_32768);
     final static Map<Field, MethodHandle[]> fieldHandlesMap = new ConcurrentHashMap<>(I15_32768);
@@ -100,6 +102,7 @@ public class LifecycleMethods {
         }
 
         private boolean hasValidations = false;
+        private boolean isGuavaService = false;
         private boolean hasResources;
         private final Multimap<Class<? extends Annotation>, Field> fieldMap = ArrayListMultimap.create(I3_8, I5_32);
         private final Multimap<Class<? extends Annotation>, Method> methodMap = ArrayListMultimap.create(I4_16, I5_32);
@@ -114,6 +117,7 @@ public class LifecycleMethods {
                     classMap.containsKey(Resource.class) ||
                     classMap.containsKey(Resources.class);
             this.hasValidations = this.hasValidations ||  !methodMap.isEmpty() || !fieldMap.isEmpty();            
+            this.isGuavaService = Service.class.isAssignableFrom(clazz);
         }
 
         
@@ -243,6 +247,7 @@ public class LifecycleMethods {
         LifecycleMethodsBuilder builder = new LifecycleMethodsBuilder(clazz, ArrayListMultimap.<Class<? extends Annotation>, String> create());
         this.hasResources = builder.hasResources;
         this.hasValidations = builder.hasValidations;
+        this.isGuavaService = builder.isGuavaService;
         methodMap = new HashMap<>();
         for (Map.Entry<Class<? extends Annotation>, Collection<Method>> entry : builder.methodMap.asMap().entrySet()) {
             methodMap.put(entry.getKey(), entry.getValue().toArray(EMPTY_METHODS));
@@ -264,11 +269,15 @@ public class LifecycleMethods {
     }
 
     public boolean hasLifecycleAnnotations() {
-        return hasValidations;
+        return hasValidations || isGuavaService;
     }
 
     public boolean hasResources() {
         return hasResources;
+    }
+
+    public boolean isGuavaService() {
+        return isGuavaService;
     }
     
     @Deprecated
