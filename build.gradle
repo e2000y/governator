@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id 'nebula.netflixoss' version '5.0.0'
+    id 'nebula.netflixoss' version '6.0.4'
 }
 
 subprojects {
@@ -24,6 +24,7 @@ subprojects {
 
     repositories {
         mavenLocal()
+        mavenCentral()
         jcenter()
     }
 

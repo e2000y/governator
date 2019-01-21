@@ -1,4 +1,4 @@
 apply plugin: 'java'
 dependencies {
-    compile 'javax.inject:javax.inject:1'
+    compile group: 'javax.inject', name: 'javax.inject', version: '1'
 }

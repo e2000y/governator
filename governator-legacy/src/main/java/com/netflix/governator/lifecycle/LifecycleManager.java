@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +84,8 @@ public class LifecycleManager implements Closeable, PostInjectorAction
     final LifecycleListener[] listeners;
     private final PreDestroyMonitor preDestroyMonitor;
     private com.netflix.governator.LifecycleManager newLifecycleManager;
+
+    private final List<Runnable>  pendingStart = new ArrayList<Runnable>();
 
     public LifecycleManager()
     {
@@ -170,14 +173,31 @@ public class LifecycleManager implements Closeable, PostInjectorAction
      * @param methods calculated lifecycle methods
      * @throws Exception errors
      */
-    public <T> void add(T obj, Binding<T> binding, LifecycleMethods methods) throws Exception
+    public <T> void add(final T obj, final Binding<T> binding, final LifecycleMethods methods) throws Exception
     {
        State managerState = state.get();
        if (managerState != State.CLOSED) {     
-           startInstance(obj, binding, methods);
            if ( managerState == State.STARTED )
            {
+               startInstance(obj, binding, methods);
                initializeObjectPostStart(obj);
+           }
+           else
+           {
+               pendingStart.add(new Runnable() {
+                   public void run()
+                   {
+                       try
+                       {
+                           startInstance(obj, binding, methods);
+                           initializeObjectPostStart(obj);
+                       }
+                       catch (Exception e)
+                       {
+                           throw new RuntimeException(e);
+                       }
+                   }
+               });
            }
        }
        else {
@@ -225,6 +245,13 @@ public class LifecycleManager implements Closeable, PostInjectorAction
     public void start() throws Exception
     {
         Preconditions.checkState(state.compareAndSet(State.LATENT, State.STARTING), "Already started");
+
+        if (!pendingStart.isEmpty())
+        {
+            pendingStart.forEach(item -> item.run());
+
+            pendingStart.clear();
+        }
 
         new ConfigurationColumnWriter(configurationDocumentation).output(log);
         if (newLifecycleManager != null) {
