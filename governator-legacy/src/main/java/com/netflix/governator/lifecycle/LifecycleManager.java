@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
-import com.google.common.util.concurrent.Service;
 
 import com.google.inject.Binding;
 import com.google.inject.Inject;
@@ -54,6 +53,11 @@ import com.netflix.governator.configuration.ConfigurationMapper;
 import com.netflix.governator.configuration.ConfigurationProvider;
 import com.netflix.governator.guice.PostInjectorAction;
 import com.netflix.governator.internal.JSR250LifecycleAction.ValidationMode;
+import com.netflix.governator.internal.PreConfigurationLifecycleFeature;
+import com.netflix.governator.internal.JSR380ValidationFeature;
+import com.netflix.governator.internal.PostConstructLifecycleFeature;
+import com.netflix.governator.internal.GuavaServiceStartFeature;
+import com.netflix.governator.internal.GuavaServiceStopFeature;
 import com.netflix.governator.internal.PreDestroyLifecycleFeature;
 import com.netflix.governator.internal.PreDestroyMonitor;
 
@@ -73,7 +77,14 @@ public class LifecycleManager implements Closeable, PostInjectorAction
 
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final ConcurrentMap<Object, LifecycleStateWrapper> objectStates = new MapMaker().weakKeys().initialCapacity(I16_65536).concurrencyLevel(I10_1024).makeMap();
+
+    private final PreConfigurationLifecycleFeature preConfigurationLifecycleFeature = new PreConfigurationLifecycleFeature(ValidationMode.LAX);
+    private final JSR380ValidationFeature jsr380ValidationFeature = new JSR380ValidationFeature();
+    private final PostConstructLifecycleFeature postConstructLifecycleFeature = new PostConstructLifecycleFeature(ValidationMode.LAX);
+    private final GuavaServiceStartFeature guavaServiceStartFeature = new GuavaServiceStartFeature();
+    private final GuavaServiceStopFeature guavaServiceStopFeature = new GuavaServiceStopFeature();
     private final PreDestroyLifecycleFeature preDestroyLifecycleFeature = new PreDestroyLifecycleFeature(ValidationMode.LAX);
+
     private final ConcurrentMap<Class<?>, List<LifecycleAction>> preDestroyActionCache = new ConcurrentHashMap<Class<?>, List<LifecycleAction>>(I15_32768);
 
     private final AtomicReference<State> state = new AtomicReference<State>(State.LATENT);
@@ -180,7 +191,6 @@ public class LifecycleManager implements Closeable, PostInjectorAction
            if ( managerState == State.STARTED )
            {
                startInstance(obj, binding, methods);
-               initializeObjectPostStart(obj);
            }
            else
            {
@@ -190,7 +200,6 @@ public class LifecycleManager implements Closeable, PostInjectorAction
                        try
                        {
                            startInstance(obj, binding, methods);
-                           initializeObjectPostStart(obj);
                        }
                        catch (Exception e)
                        {
@@ -283,7 +292,12 @@ public class LifecycleManager implements Closeable, PostInjectorAction
         log.debug("Starting {}", instanceType.getName());
 
         final LifecycleStateWrapper lifecycleState = initState(obj, LifecycleState.PRE_CONFIGURATION);
-        methods.methodInvoke(PreConfiguration.class, obj);
+        final List<LifecycleAction> actions = preConfigurationLifecycleFeature.getActionsForType(instanceType);
+
+        for (LifecycleAction action: actions) {
+          action.call(obj);
+        }
+        actions.clear();
 
         lifecycleState.set(obj, LifecycleState.SETTING_CONFIGURATION);
         configurationMapper.mapConfiguration(configurationProvider, configurationDocumentation, obj, methods);
@@ -292,44 +306,38 @@ public class LifecycleManager implements Closeable, PostInjectorAction
         resourceMapper.map(obj, methods);
 
         lifecycleState.set(obj, LifecycleState.POST_CONSTRUCTING);
-        methods.methodInvoke(PostConstruct.class, obj);
+        actions.addAll(postConstructLifecycleFeature.getActionsForType(instanceType));
         
+        for (LifecycleAction action: actions) {
+          action.call(obj);
+        }
+        actions.clear();
+
         lifecycleState.set(obj, LifecycleState.PRE_WARMING_UP);
-        Method[] warmUpMethods = methods.annotatedMethods(WarmUp.class);
-        if (warmUpMethods.length > 0) {
-            Method[] postConstructMethods = methods.annotatedMethods(PostConstruct.class);
+        //  use pre-warming up to validate all settings
+        actions.addAll(jsr380ValidationFeature.getActionsForType(instanceType));
 
-            for ( Method warmupMethod : warmUpMethods)
-            {
-                boolean skipWarmup = false;
-                // assuming very few methods in both WarmUp and PostConstruct
-                for (Method postConstruct :  postConstructMethods) {
-                    if (postConstruct == warmupMethod) {
-                        skipWarmup = true;
-                        break;
-                    }
-                }
-                if (!skipWarmup) {
-                    log.debug("\t{}()", warmupMethod.getName());
-                    LifecycleMethods.methodInvoke(warmupMethod, obj);
-                }
-            }
-
+        for (LifecycleAction action: actions) {
+          action.call(obj);
         }
+        actions.clear();
+
         lifecycleState.set(obj, LifecycleState.WARMING_UP);
+        actions.addAll(guavaServiceStartFeature.getActionsForType(instanceType));
 
-        if (methods.isGuavaService()) {
-            Service  svc = (Service) obj;
-
-            if (svc.state() == Service.State.NEW)  svc.startAsync();
+        for (LifecycleAction action: actions) {
+          action.call(obj);
         }
+        actions.clear();
 
         List<LifecycleAction> preDestroyActions;
         if (preDestroyActionCache.containsKey(instanceType)) {
             preDestroyActions = preDestroyActionCache.get(instanceType);
         }
         else {
-            preDestroyActions = preDestroyLifecycleFeature.getActionsForType(instanceType);
+            preDestroyActions = guavaServiceStopFeature.getActionsForType(instanceType);
+            preDestroyActions.addAll(preDestroyLifecycleFeature.getActionsForType(instanceType));
+
             preDestroyActionCache.put(instanceType, preDestroyActions);
         }
         
@@ -394,12 +402,6 @@ public class LifecycleManager implements Closeable, PostInjectorAction
         }
     }
 
-    private void initializeObjectPostStart(Object obj)
-    {
-        
-    }
-
-    
     @Override
     public void call(Injector injector) {
         this.resourceMapper.setInjector(injector);

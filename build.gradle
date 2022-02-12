@@ -15,20 +15,15 @@
  */
 
 plugins {
-    id 'nebula.netflixoss' version '9.4.1'
+    id 'nebula.netflixoss' version '10.5.1'
 }
 
-apply plugin: 'java'
-
-subprojects {
+allprojects {
     apply plugin: 'nebula.netflixoss'
-    apply plugin: 'java'
     apply plugin: 'java-library'
 
     repositories {
-        mavenLocal()
         mavenCentral()
-        jcenter()
     }
 
     sourceCompatibility = 1.8
@@ -37,8 +32,8 @@ subprojects {
     group = "com.netflix.governator"
 
     dependencies {
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.slf4j:slf4j-log4j12:1.7.2'
+        testImplementation 'junit:junit:4.12'
+        testImplementation 'org.slf4j:slf4j-log4j12:1.7.2'
     }
 
     eclipse {

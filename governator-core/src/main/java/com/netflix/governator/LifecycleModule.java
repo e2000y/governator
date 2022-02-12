@@ -27,6 +27,10 @@ import com.netflix.governator.internal.JSR250LifecycleAction.ValidationMode;
 import com.netflix.governator.internal.PostConstructLifecycleFeature;
 import com.netflix.governator.internal.PreDestroyLifecycleFeature;
 import com.netflix.governator.internal.PreDestroyMonitor;
+import com.netflix.governator.internal.GuavaServiceStartFeature;
+import com.netflix.governator.internal.GuavaServiceStopFeature;
+import com.netflix.governator.internal.JSR380ValidationFeature;
+
 
 /**
  * Adds support for standard lifecycle annotations @PostConstruct and @PreDestroy to Guice.
@@ -69,10 +73,12 @@ public final class LifecycleModule extends AbstractModule {
         private PostConstructLifecycleFeature postConstructFeature;
         private PreDestroyLifecycleFeature preDestroyFeature;
         private PreDestroyMonitor preDestroyMonitor;
+        private GuavaServiceStartFeature guavaServiceStartFeature;
+        private GuavaServiceStopFeature guavaServiceStopFeature;
+        private JSR380ValidationFeature jsr380ValidationFeature;
         private boolean shutdownOnFailure = true;
-        
 
-          @SuppressLifecycleUninitialized
+        @SuppressLifecycleUninitialized
         @Singleton
         static class OptionalArgs {
             @com.google.inject.Inject(optional = true)
@@ -99,6 +105,9 @@ public final class LifecycleModule extends AbstractModule {
             provisionListener.postConstructFeature = new PostConstructLifecycleFeature(validationMode);
             provisionListener.preDestroyFeature = new PreDestroyLifecycleFeature(validationMode);
             provisionListener.preDestroyMonitor = new PreDestroyMonitor(injector.getScopeBindings());
+            provisionListener.guavaServiceStartFeature = new GuavaServiceStartFeature();
+            provisionListener.guavaServiceStopFeature = new GuavaServiceStopFeature();
+            provisionListener.jsr380ValidationFeature = new JSR380ValidationFeature();
             LOG.debug("LifecycleProvisionListener initialized with features {}", features);
         }
         
@@ -111,10 +120,16 @@ public final class LifecycleModule extends AbstractModule {
                     actions.postConstructActions.addAll(feature.getActionsForType(type));
                 }
                 
-                // Finally, add @PostConstruct methods
+                // and, add @PostConstruct methods
                 actions.postConstructActions.addAll(postConstructFeature.getActionsForType(type));
+                // then, add JSR380 validation
+                actions.postConstructActions.addAll(jsr380ValidationFeature.getActionsForType(type));
+                // finally, add GuavaServiceStart
+                actions.postConstructActions.addAll(guavaServiceStartFeature.getActionsForType(type));
                 
-                // Determine @PreDestroy methods
+                // First, add GuavaServiceStop methods
+                actions.preDestroyActions.addAll(guavaServiceStopFeature.getActionsForType(type));
+                // then Determine @PreDestroy methods
                 actions.preDestroyActions.addAll(preDestroyFeature.getActionsForType(type));
                 
                 TypeLifecycleActions existing = cache.putIfAbsent(type, actions);

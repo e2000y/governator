@@ -53,7 +53,6 @@ public final class LifecycleManager {
         }
     }
 
-    
     private final Set<SafeLifecycleListener> listeners = new LinkedHashSet<>();
     private final AtomicReference<State> state;
     private final ReferenceQueue<LifecycleListener> unreferencedListenersQueue = new ReferenceQueue<>();

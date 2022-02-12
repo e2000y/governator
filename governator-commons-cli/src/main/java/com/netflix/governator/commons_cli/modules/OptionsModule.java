@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 import javax.inject.Inject;
+import com.google.inject.name.Names;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -92,9 +93,15 @@ public abstract class OptionsModule extends AbstractModule {
         private String shortopt;
         private String defaultValue;
         private Class<? extends Annotation> annot;
+        private String annotName;
 
         public OptionBuilder annotatedWith(Class<? extends Annotation> annot) {
             this.annot = annot;
+            return this;
+        }
+
+        public OptionBuilder annotatedWith(String annot) {
+            this.annotName = annot;
             return this;
         }
         
@@ -250,11 +257,20 @@ public abstract class OptionsModule extends AbstractModule {
                 
                 LOG.info("Binding option to annotation : " + builder.annot.getName());
             }
+            else if ((builder.annotName != null) && (builder.annotName.length() > 0)) {
+                bind(String.class)
+                    .annotatedWith(Names.named(builder.annotName))
+                    .toProvider(new StringOptionProvider(option, builder.defaultValue))
+                    .asEagerSingleton();
+
+                LOG.info("Binding option to String : " + option.getOpt());
+            }
             else {
                 bind(String.class)
                     .annotatedWith(Names.named(option.getOpt()))
                     .toProvider(new StringOptionProvider(option, builder.defaultValue))
                     .asEagerSingleton();
+
                 LOG.info("Binding option to String : " + option.getOpt());
             }
             options.addOption(option);
