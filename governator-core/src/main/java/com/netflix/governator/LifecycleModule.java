@@ -61,7 +61,7 @@ public final class LifecycleModule extends AbstractModule {
      */
     static class TypeLifecycleActions {
         final List<LifecycleAction> postConstructActions = new ArrayList<LifecycleAction>();
-        final List<LifecycleAction> preDestroyActions = new ArrayList<>();
+        final List<LifecycleAction> preDestroyActions = new ArrayList<LifecycleAction>();
     }
     
     @Singleton
@@ -97,17 +97,19 @@ public final class LifecycleModule extends AbstractModule {
                 final Injector injector,
                 OptionalArgs args,
                 LifecycleManager manager, 
-                LifecycleProvisionListener provisionListener, 
+                LifecycleProvisionListener lifecycleProvisionListener, 
                 Set<LifecycleFeature> features) {
-            provisionListener.features = features;
-            provisionListener.shutdownOnFailure =  args.hasShutdownOnFailure();
+
+            lifecycleProvisionListener.features = features;
+            lifecycleProvisionListener.shutdownOnFailure =  args.hasShutdownOnFailure();
+
             ValidationMode validationMode = args.getJsr250ValidationMode();
-            provisionListener.postConstructFeature = new PostConstructLifecycleFeature(validationMode);
-            provisionListener.preDestroyFeature = new PreDestroyLifecycleFeature(validationMode);
-            provisionListener.preDestroyMonitor = new PreDestroyMonitor(injector.getScopeBindings());
-            provisionListener.guavaServiceStartFeature = new GuavaServiceStartFeature();
-            provisionListener.guavaServiceStopFeature = new GuavaServiceStopFeature();
-            provisionListener.jsr380ValidationFeature = new JSR380ValidationFeature();
+
+            lifecycleProvisionListener.postConstructFeature = new PostConstructLifecycleFeature(validationMode);
+            lifecycleProvisionListener.preDestroyFeature = new PreDestroyLifecycleFeature(validationMode);
+            lifecycleProvisionListener.preDestroyMonitor = new PreDestroyMonitor(injector.getScopeBindings());
+            lifecycleProvisionListener.guavaServiceStartFeature = new GuavaServiceStartFeature();
+            lifecycleProvisionListener.guavaServiceStopFeature = new GuavaServiceStopFeature();
             LOG.debug("LifecycleProvisionListener initialized with features {}", features);
         }
         
@@ -119,14 +121,13 @@ public final class LifecycleModule extends AbstractModule {
                 for (LifecycleFeature feature : features) {
                     actions.postConstructActions.addAll(feature.getActionsForType(type));
                 }
-                
+
                 // and, add @PostConstruct methods
                 actions.postConstructActions.addAll(postConstructFeature.getActionsForType(type));
                 // then, add JSR380 validation
                 actions.postConstructActions.addAll(jsr380ValidationFeature.getActionsForType(type));
                 // finally, add GuavaServiceStart
                 actions.postConstructActions.addAll(guavaServiceStartFeature.getActionsForType(type));
-                
                 // First, add GuavaServiceStop methods
                 actions.preDestroyActions.addAll(guavaServiceStopFeature.getActionsForType(type));
                 // then Determine @PreDestroy methods
