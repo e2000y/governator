@@ -110,6 +110,7 @@ public final class LifecycleModule extends AbstractModule {
             lifecycleProvisionListener.preDestroyMonitor = new PreDestroyMonitor(injector.getScopeBindings());
             lifecycleProvisionListener.guavaServiceStartFeature = new GuavaServiceStartFeature();
             lifecycleProvisionListener.guavaServiceStopFeature = new GuavaServiceStopFeature();
+            lifecycleProvisionListener.jsr380ValidationFeature = new JSR380ValidationFeature();
             LOG.debug("LifecycleProvisionListener initialized with features {}", features);
         }
         
