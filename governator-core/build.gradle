@@ -1,12 +1,13 @@
+apply plugin: 'java-library'
+
 dependencies {
     api     project(':governator-api')
-    api     "javax.inject:javax.inject:1"
+    api group: 'jakarta.inject', name: 'jakarta.inject-api', version: '2.0.1'
     api     "org.slf4j:slf4j-api:${slf4j_version}"
-    api     "jakarta.validation:jakarta.validation-api:3.0.1"
-    api     "com.google.guava:guava:31.0.1-jre"
+    api     "jakarta.validation:jakarta.validation-api:3.0.2"
+    api     "com.google.guava:guava:33.2.0-jre"
     api     "com.google.inject:guice:${guice_version}"
     api     "com.google.inject.extensions:guice-multibindings:${guice_version}"
-    runtimeOnly  'org.hibernate.validator:hibernate-validator:7.0.2.Final'
 
     testImplementation "org.hamcrest:hamcrest-core:${hamcrest_version}"
     testImplementation "org.hamcrest:hamcrest-library:${hamcrest_version}"

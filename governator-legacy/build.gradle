@@ -1,8 +1,9 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
 apply plugin: "com.github.johnrengelman.shadow"
+apply plugin: 'java-library'
 
 // Add a new configuration 'bundle' for fine grain control on what artifacts to shadow.
 configurations {
@@ -27,7 +28,7 @@ dependencies {
 }
 
 shadowJar {
-    classifier = null
+    archiveClassifier = null
     configurations = [project.configurations.bundle]
 
     exclude 'module-info.class'
