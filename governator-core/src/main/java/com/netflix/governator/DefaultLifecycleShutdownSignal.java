@@ -2,8 +2,8 @@ package com.netflix.governator;
 
 import java.util.concurrent.CountDownLatch;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Default shutdown signal, mostly to be used for runtime applications, using

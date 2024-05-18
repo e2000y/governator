@@ -1,7 +1,7 @@
 package com.netflix.governator;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import com.google.inject.AbstractModule;
 

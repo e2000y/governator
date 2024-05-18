@@ -1,6 +1,6 @@
 package com.netflix.governator.test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.google.inject.Injector;
 import com.netflix.governator.spi.LifecycleListener;

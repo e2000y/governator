@@ -1,6 +1,6 @@
 package com.netflix.governator;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Install this module to log a Provision report after the Injector is created.

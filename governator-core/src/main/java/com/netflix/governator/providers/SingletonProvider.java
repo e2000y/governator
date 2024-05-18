@@ -1,6 +1,6 @@
 package com.netflix.governator.providers;
 
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 /**
  * Base class for {@link Providers} that which to enforce singleton semantics

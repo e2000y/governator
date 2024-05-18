@@ -21,8 +21,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Set;
 
-import javax.inject.Scope;
-import javax.inject.Singleton;
+import jakarta.inject.Scope;
+import jakarta.inject.Singleton;
 
 public class AutoBindSingletonAnnotatedClassScanner implements AnnotatedClassScanner {
     private static final Logger LOG = LoggerFactory.getLogger(AutoBindSingletonAnnotatedClassScanner.class);

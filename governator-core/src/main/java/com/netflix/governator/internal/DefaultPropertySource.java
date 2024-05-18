@@ -1,6 +1,6 @@
 package com.netflix.governator.internal;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import com.netflix.governator.AbstractPropertySource;
 import com.netflix.governator.annotations.SuppressLifecycleUninitialized;

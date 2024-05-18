@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 class AdvisedProvider<T> implements ProviderWithExtensionVisitor<T>, HasDependencies  {
     private final Set<Dependency<?>> dependencies = new HashSet<>();
@@ -58,7 +58,7 @@ class AdvisedProvider<T> implements ProviderWithExtensionVisitor<T>, HasDependen
 
     @SuppressWarnings("unchecked")
     @Toolable
-    @javax.inject.Inject
+    @jakarta.inject.Inject
     protected void initialize(Injector injector) {
         for (Binding<?> binding : injector.findBindingsByType(advisesType)) {
             Key<?> bindingKey = binding.getKey();

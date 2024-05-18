@@ -10,7 +10,7 @@ import com.google.inject.spi.ProvisionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public final class ProvisionMetricsModule extends AbstractModule {
     private static final Logger LOG = LoggerFactory.getLogger(ProvisionMetricsModule.class);

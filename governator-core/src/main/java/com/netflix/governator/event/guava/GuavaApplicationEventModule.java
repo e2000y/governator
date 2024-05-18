@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
