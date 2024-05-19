@@ -1,7 +1,7 @@
 package com.netflix.governator;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
 
 import org.junit.Before;
 import org.junit.Rule;

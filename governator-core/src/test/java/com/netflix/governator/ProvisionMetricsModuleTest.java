@@ -11,8 +11,8 @@ import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
 
 public class ProvisionMetricsModuleTest {
     @Test

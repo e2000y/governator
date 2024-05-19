@@ -3,7 +3,7 @@ package com.netflix.governator.package1;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 public class Foo  extends AbstractModule {
     @Provides

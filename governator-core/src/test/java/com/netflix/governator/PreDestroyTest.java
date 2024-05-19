@@ -3,9 +3,9 @@ package com.netflix.governator;
 import java.io.Closeable;
 import java.io.IOException;
 
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.junit.Assert;
 import org.junit.Before;

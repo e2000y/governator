@@ -2,8 +2,8 @@ package com.netflix.governator;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
 
 import com.google.inject.Module;
 import com.google.inject.assistedinject.Assisted;

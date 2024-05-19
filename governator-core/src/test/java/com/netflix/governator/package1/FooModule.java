@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.netflix.governator.annotations.AutoBindSingleton;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @AutoBindSingleton
 public class FooModule extends AbstractModule {

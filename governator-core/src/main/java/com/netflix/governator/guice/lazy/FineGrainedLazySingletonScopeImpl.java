@@ -25,7 +25,7 @@ import com.netflix.governator.internal.AbstractScope;
 import java.util.Map;
 
 /**
- * @deprecated Use javax.inject.Singleton instead.  FineGrainedLazySingleton is not needed 
+ * @deprecated Use jakarta.inject.Singleton instead.  FineGrainedLazySingleton is not needed 
  * as of Guice4 which fixes the global lock issue.
  */
 @Deprecated
